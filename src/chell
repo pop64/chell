@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+
+# LIBS
+readonly STDLIB="#include <stdlib.h>\n";
+readonly STDIO="#include <stdio.h>\n";
+
+# std main structure
+readonly STD_BODY_HEAD="int main(int argc, char** argv){";
+readonly STD_BODY_FOOT="return 0;}";
+
+#char codes
+readonly n="\\\n";
+readonly b="\\\b";
+readonly t="\\\t";
+
+readonly string="%s";
+readonly decimal="%d";
+readonly float="%f";
+
+# configs
+cVersion="c11";
+genLog="gen";
+binPath="../bin/";
+outPutName="out";
+flags="";
+
+# output file content
+content="";
+topContent="";
+mainContent="$STD_BODY_HEAD";
+
+# file names
+main_file_name="outputFile.c";
+errors_and_warnings_file="erro_warn.log";
+
+function top()
+{
+    topContent+=$1;
+}
+
+function main()
+{
+    mainContent+=$1;
+}
+
+function go()
+{
+    
+    mainContent=$(../bin/convert "$mainContent" "'" "\""); # convert strings "
+    mainContent=$(../bin/convert "$mainContent" "^" "'"); # convert chars '
+
+    topContent=$(../bin/convert "$topContent" "'" "\""); # convert strings "
+    topContent=$(../bin/convert "$topContent" "^" "'"); # convert chars '
+
+    mainContent+=$STD_BODY_FOOT;
+
+    content+="$topContent\n$mainContent";
+
+    $( echo -e $content > $main_file_name );
+
+    if [ $genLog == "!" ]
+    then
+        # check if log file don't exists
+        [[ ! -f $errors_and_warnings_file ]] && > $errors_and_warnings_file;
+
+        # compile and send the output to log file
+        gcc $flags -std=$cVersion -o $binPath$outPutName $main_file_name &> $errors_and_warnings_file;
+
+        $binPath$outPutName;
+    else
+        gcc $flags -std=$cVersion -o $binPath$outPutName $main_file_name
+
+        $binPath$outPutName;
+    fi
+
+    rm $main_file_name;
+}
